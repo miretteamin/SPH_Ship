@@ -1,0 +1,10 @@
+scripts
+build
+12_sph.pdb
+CMakeLists.txt
+imgui.ini
+Makefile
+Project.exe
+Project.pdb
+vscode.code-workspace
+desktop.ini
