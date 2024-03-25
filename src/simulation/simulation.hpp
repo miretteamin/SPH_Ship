@@ -41,4 +41,4 @@ struct sph_parameters_structure
 };
 
 
-void simulate(float rock_mass, bool boat_alive, bool reset_boat, bool rock_alive, bool reset_rock, float t, float dt, cgp::numarray<particle_element>& particles, cgp::numarray<particle_element>& boat_particles, cgp::numarray<particle_element>& rock_particles, sph_parameters_structure const& sph_parameters);
+void simulate(float rock_mass, bool boat_alive, bool reset_boat, bool rock_alive, bool reset_rock, bool wave_alive, bool reset_wave, float t, float dt, cgp::numarray<particle_element>& particles, cgp::numarray<particle_element>& boat_particles, cgp::numarray<particle_element>& rock_particles, sph_parameters_structure const& sph_parameters);

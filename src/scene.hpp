@@ -8,12 +8,13 @@
 
 using cgp::mesh_drawable;
 
-enum primitive_type_enum {primitive_cube};
+enum primitive_type_enum { primitive_cube };
 
 
 struct gui_parameters {
 	bool display_rock = false;
 	bool display_boat = false;
+	bool display_wave = false;
 	bool display_color = true;
 	bool display_particles = true;
 	bool display_radius = false;
@@ -21,7 +22,7 @@ struct gui_parameters {
 
 // The structure of the custom scene
 struct scene_structure : cgp::scene_inputs_generic {
-	
+
 	// ****************************** //
 	// Elements and shapes of the scene
 	// ****************************** //
@@ -33,7 +34,7 @@ struct scene_structure : cgp::scene_inputs_generic {
 	environment_structure environment;   // Standard environment controler
 	input_devices inputs;                // Storage for inputs status (mouse, keyboard, window dimension)
 	gui_parameters gui;                  // Standard GUI element storage
-	
+
 	// ****************************** //
 	// Elements and shapes of the scene
 	// ****************************** //
@@ -46,6 +47,12 @@ struct scene_structure : cgp::scene_inputs_generic {
 
 	cgp::grid_2D<cgp::vec3> field;      // grid used to represent the volume of the fluid under the particles
 	cgp::mesh_drawable field_quad; // quad used to display this field color
+
+	bool reset_wave;
+	bool wave_alive;
+	float waveAmplitude;
+	float waveLength;
+	float waveSpeed;
 
 	bool reset_rock;
 	float rock_mass;

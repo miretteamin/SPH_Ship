@@ -1,5 +1,4 @@
 #include "scene.hpp"
-
 using namespace cgp;
 
 void update_field_color(grid_2D<vec3>& field, numarray<particle_element> const& particles);
@@ -9,26 +8,26 @@ void scene_structure::initialize()
 {
 	camera_projection = camera_projection_orthographic{ -1.1f, 1.1f, -1.1f, 1.1f, -10, 10, window.aspect_ratio() };
 	camera_control.initialize(inputs, window); // Give access to the inputs and window global state to the camera controler
-	camera_control.look_at({ 0.0f, 0.0f, 2.0f }, {0,0,0}, {0,1,0});
+	camera_control.look_at({ 0.0f, 0.0f, 2.0f }, { 0,0,0 }, { 0,1,0 });
 	global_frame.initialize_data_on_gpu(mesh_primitive_frame());
 
 	field.resize(30, 30);
-	field_quad.initialize_data_on_gpu(mesh_primitive_quadrangle({ -1,-1,0 }, { 1,-1,0 }, { 1,1,0 }, { -1,1,0 }) );
+	field_quad.initialize_data_on_gpu(mesh_primitive_quadrangle({ -1,-1,0 }, { 1,-1,0 }, { 1,1,0 }, { -1,1,0 }));
 	field_quad.material.phong = { 1,0,0 };
 	field_quad.texture.initialize_texture_2d_on_gpu(field);
 
 	mesh rock_mesh = mesh_primitive_sphere(0.1f);
 	rock.initialize_data_on_gpu(rock_mesh);
-	rock.material.color = vec3(0.2,0.2,0.2);
+	rock.material.color = vec3(0.2, 0.2, 0.2);
 
-	mesh boat_mesh = mesh_primitive_quadrangle({0,0,0}, {0.2,0,0}, {0.2,0.05,0}, {0,0.05,0});
+	mesh boat_mesh = mesh_primitive_quadrangle({ 0,0,0 }, { 0.2,0,0 }, { 0.2,0.05,0 }, { 0,0.05,0 });
 	boat.initialize_data_on_gpu(boat_mesh);
-	boat.material.color = vec3(0.5,0.25,0.0);
+	boat.material.color = vec3(0.5, 0.25, 0.0);
 
 	initialize_sph();
-	sphere_particle.initialize_data_on_gpu(mesh_primitive_sphere(1.0,{0,0,0},10,10));
+	sphere_particle.initialize_data_on_gpu(mesh_primitive_sphere(1.0, { 0,0,0 }, 10, 10));
 	sphere_particle.model.scaling = 0.01f;
-	sphere_particle.material.color = vec3(0,0,1);
+	sphere_particle.material.color = vec3(0, 0, 1);
 	curve_visual.color = { 0.1,0.1,1 };
 	curve_visual.initialize_data_on_gpu(curve_primitive_circle());
 }
@@ -56,24 +55,27 @@ void scene_structure::initialize_sph()
 	}
 	double angleIncrement = 2 * 3.141592653589793238463 / 20;
 
+	reset_wave = true;
+	wave_alive = true;
+
 	rock_alive = false;
 	reset_rock = true;
 	rock_particles.clear();
-    // Generate points
-    for (int i = 0; i < 20; ++i) {
-        // Calculate angle for current point
-        double angle = i * angleIncrement;
+	// Generate points
+	for (int i = 0; i < 20; ++i) {
+		// Calculate angle for current point
+		double angle = i * angleIncrement;
 
-        // Calculate coordinates of the point
-        double x = 0.1 * std::cos(angle);
-        double y = 1 + 0.1 * std::sin(angle);
+		// Calculate coordinates of the point
+		double x = 0.1 * std::cos(angle);
+		double y = 1 + 0.1 * std::sin(angle);
 		particle_element rock_particle;
-		rock_particle.p = {x, y, 0};
+		rock_particle.p = { x, y, 0 };
 		rock_particle.rho = 1;
 		rock_particle.pressure = 1;
-        // Add point to the vector
-        rock_particles.push_back(rock_particle);
-    }
+		// Add point to the vector
+		rock_particles.push_back(rock_particle);
+	}
 
 	boat_alive = false;
 	reset_boat = true;
@@ -81,31 +83,39 @@ void scene_structure::initialize_sph()
 	for (int i = 0; i < 5; i++) {
 		for (int j = 0; j < 2; j++) {
 			particle_element boat_particle;
-			boat_particle.p = {0.04*i, 0.025*j, 0};
+			boat_particle.p = { 0.04 * i, 0.025 * j, 0 };
 			boat_particle.rho = 1;
 			boat_particle.pressure = 1;
 			boat_particles.push_back(boat_particle);
 		}
 	}
+
+
 }
 
 void scene_structure::display_frame()
 {
 	// Set the light to the current position of the camera
 	environment.light = camera_control.camera_model.position();
-	
+
 	timer.update(); // update the timer to the current elapsed time
 	float const dt = 0.005f * timer.scale;
-	t+=0.01;
+	t += 0.01;
 	rock_alive = gui.display_rock;
 	boat_alive = gui.display_boat;
-	simulate(rock_mass, boat_alive, reset_boat, rock_alive, reset_rock, t, dt, particles, boat_particles, rock_particles, sph_parameters);
+	wave_alive = gui.display_wave;
+	simulate(rock_mass, boat_alive, reset_boat, rock_alive, reset_rock, wave_alive, reset_wave, t, dt, particles, boat_particles, rock_particles, sph_parameters);
 	reset_rock = false;
 	reset_boat = false;
+	reset_wave = false;
+
+	if (wave_alive) {
+		wave_alive = true;
+	}
 
 	if (gui.display_boat) {
 		boat_alive = true;
-		vec3 p = {0,0,0};
+		vec3 p = { 0,0,0 };
 		for (int i = 0; i < boat_particles.size(); ++i) {
 			p += boat_particles[i].p;
 			sphere_particle.model.translation = boat_particles[i].p;
@@ -115,10 +125,10 @@ void scene_structure::display_frame()
 		boat.model.translation = p - vec3(0.105, 0.025, 0);
 		draw(boat, environment);
 	}
-	
+
 	if (gui.display_rock) {
-		rock_alive=true;
-		vec3 p = {0,0,0};
+		rock_alive = true;
+		vec3 p = { 0,0,0 };
 		for (int i = 0; i < rock_particles.size(); ++i) {
 			p += rock_particles[i].p;
 			sphere_particle.model.translation = rock_particles[i].p;
@@ -137,7 +147,7 @@ void scene_structure::display_frame()
 			vec3 const& v = particles[k].v;
 			float pr = particles[k].pressure;
 			sphere_particle.model.translation = p;
-			float s = norm(v) * (p.y+1.1);
+			float s = norm(v) * (p.y + 1.1);
 			// float s = norm(v) * pr / 200;
 			sphere_particle.material.color = vec3(clamp(s, 0, 1), clamp(s, 0, 1), 1);
 			draw(sphere_particle, environment);
@@ -164,12 +174,12 @@ void scene_structure::display_gui()
 {
 	ImGui::SliderFloat("Timer scale", &timer.scale, 0.01f, 4.0f, "%0.2f");
 
-	ImGui::SliderFloat("Rock mass", &rock_mass, 0.5*sph_parameters.m, 100*sph_parameters.m);
+	ImGui::SliderFloat("Rock mass", &rock_mass, 0.5 * sph_parameters.m, 100 * sph_parameters.m);
 
 	bool const restart = ImGui::Button("Restart");
 	if (restart)
 		initialize_sph();
-		
+
 	ImGui::Checkbox("Rock", &gui.display_rock);
 	bool const drop = ImGui::Button("Reset Rock");
 	if (drop)
@@ -178,6 +188,13 @@ void scene_structure::display_gui()
 	bool const drop_boat = ImGui::Button("Reset Boat");
 	if (drop_boat)
 		reset_boat = true;
+
+	ImGui::Checkbox("Waves", &gui.display_wave); // Toggle waves on and off
+
+	bool const drop_wave = ImGui::Button("Reset Wave");
+	if (drop_wave)
+		reset_wave = true;
+
 	ImGui::Checkbox("Color", &gui.display_color);
 	ImGui::Checkbox("Particles", &gui.display_particles);
 	ImGui::Checkbox("Radius", &gui.display_radius);
@@ -205,7 +222,7 @@ void update_field_color(grid_2D<vec3>& field, numarray<particle_element> const& 
 void scene_structure::mouse_move_event()
 {
 	// Do not mode the camera
-	/* 
+	/*
 	if (!inputs.keyboard.shift)
 		camera_control.action_mouse_move(environment.camera_view);
 		*/
